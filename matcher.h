@@ -7,20 +7,23 @@
 using namespace cv;
 using namespace std;
 
-class Matcher {
+class MyMatcher {
 public:
 
 	// constructor
-	Matcher();
+	MyMatcher();
 
 	// // methods
-	//load_obj, takes an image, calculates features (defines a new object)
-	// then adds the object to the list of objects to track
+	// load_obj: takes an image, calculates features (defines a new object)
+	// then adds the object to the list of objects to match
 	void load_obj(Mat img_of_obj);
+
+	// match: return a vector of vectors of points : positions of the good matches, one vector for each obj 
+	vector<vector<Point2f>> match(Mat frame);
+
 
 	// //variables
 	vector<Mat> obj_imgs;
-
 
 };
 
