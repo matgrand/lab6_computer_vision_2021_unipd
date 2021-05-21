@@ -7,7 +7,7 @@
 using namespace cv;
 using namespace std;
 
-const String img_folder_path = "../data/";
+const String img_folder_path = "../Data/objects/";
 
 int main(int argc, char* argv[]) {
 	//load the images and create the objects associated with them
@@ -18,22 +18,22 @@ int main(int argc, char* argv[]) {
 	//initialize the matcher
 	MyMatcher mtchr;
 
-	for (int i = 0; i < size(img_filenames); i++) { //for every obj image
+	for (int i = 0; i < img_filenames.size(); i++) { //for every obj image
 		Mat tmp_img = imread(img_filenames[i]);
 		//imshow(to_string(i), tmp_img); //show the image
-	
+
 		//loads the objects in the matcher
 		//and finds its features
 		mtchr.load_obj(tmp_img);
 	}
 
-	VideoCapture cap("../data/video.mov");
-	Mat frame; 
+	VideoCapture cap("../Data/video.mov");
+	Mat frame;
 
 	if (cap.isOpened()) {
 		// get the first frame
 		cap >> frame;
-		//match the first frame 
+		//match the first frame
 		vector<vector<Point2f>> good_points_vec = mtchr.match(frame);
 
 		//create tracker
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 
 		//draw first rectangle
 		trckr.draw_rect();
-		
+
 		while (1) {
 			cap >> frame; //update frame
 			if (frame.empty()) //exit condition
@@ -58,12 +58,3 @@ int main(int argc, char* argv[]) {
 
 	waitKey(0);
 }
-
-
-
-
-
-
-
-
-
