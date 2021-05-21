@@ -28,5 +28,7 @@ public:
 	//frames < objects < points < point > > >
 
 	vector<vector<vector<Point2f>>> frames_objs_points;
+	vector<Mat> recent_frames;
+
 
 };
