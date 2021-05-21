@@ -8,7 +8,7 @@ MyMatcher(){
 
 }
 
-void load_obj(Mat img_of_obj){
+void MyMatcher::load_obj(Mat img_of_obj){
 
   Mat descr;
 	vector<KeyPoint> keypoints;
@@ -20,7 +20,7 @@ void load_obj(Mat img_of_obj){
 
 }
 
-vector<vector<Point2f>> match(Mat frame){
+vector<Mat> MyMatcher::match(Mat frame){
 
   Mat descr;
   vector<KeyPoint> keypoints;
@@ -68,12 +68,18 @@ vector<vector<Point2f>> match(Mat frame){
 		}
 	}
 
+  vector<Mat> homographies;
   vector<Point2f> obj;
   vector<Point2f> scene;
-  for(int i = 0; i < good_matches.size(); ++i){
-    //-- Get the keypoints from the good matches
-    obj.push_back( keypoints_object[ good_matches[i].queryIdx ].pt );
-    scene.push_back( keypoints_scene[ good_matches[i].trainIdx ].pt );
-  }
+  for(int j = 0; j < obj_imgs.size(); ++j){
 
+    for(int i = 0; i < good_matches.size(); ++i){
+    //-- Get the keypoints from the good matches
+      obj.push_back( obj_imgs[ good_matches[i].queryIdx ].pt );
+      scene.push_back( keypoints[ good_matches[i].trainIdx ].pt );
+    }
+    Mat H = findHomography(obj, scene, RANSAC);
+    homographies.push_back(H);
+  }
+  return homographies
 }
