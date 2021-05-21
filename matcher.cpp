@@ -66,6 +66,7 @@ vector<Mat> MyMatcher::match(Mat frame){
 				good_matches[i].push_back(matches[i][j]);
 			}
 		}
+    std::cout << "Number of good matches: " << good_matches[i] << '\n';
 	}
 
   vector<Mat> homographies;
