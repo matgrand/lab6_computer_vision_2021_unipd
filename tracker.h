@@ -26,9 +26,14 @@ public:
 	
 	//keep the points to_track, for each frame analyzed 
 	//frames < objects < points < point > > >
+	vector<vector<vector<Point2f>>> objs_points;  // features points
+	vector<vector<vector<Point2f>>> rect_points;  // rectangles points
 
-	vector<vector<vector<Point2f>>> frames_objs_points;
-	vector<Mat> recent_frames;
+	vector<Mat> recent_frames; //collection of the recent frames
+	vector<Scalar> colors; //colors for the rect 
 
+	int num_objs;
+
+	vector<vector<Mat>> H_vec; //4 obj for each frame, one Mat for each obj
 
 };
