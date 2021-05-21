@@ -6,7 +6,7 @@ find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME} 
-lab6_main.cpp
+lab6_main.cpp matcher.h matcher.cpp tracker.h tracker.cpp
 )
 
 file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
