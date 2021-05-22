@@ -25,111 +25,105 @@ void MyMatcher::load_obj(Mat img_of_obj){
 
 vector<vector<Point2f>> MyMatcher::match(Mat frame){
 
-	Mat descr;
-	vector<KeyPoint> keypoints;
+	Mat frame_descr;
+	vector<KeyPoint> frame_keypoints;
 
 	Ptr<SIFT> sift = SIFT::create();
-	sift->SIFT::detect(frame, keypoints);   //detect keypoints
-	sift->SIFT::compute(frame, keypoints, descr);  //compute descriptor
+	sift->SIFT::detect(frame, frame_keypoints);   //detect keypoints
+	sift->SIFT::compute(frame, frame_keypoints, frame_descr);  //compute descriptor
 
-	Ptr<BFMatcher> matcher = BFMatcher::create(cv::NORM_L2);   //create a matcher of type BFMatcher to match descriptors
+	BFMatcher matcher = BFMatcher(cv::NORM_L2, false);   //create a matcher of type BFMatcher to match descriptors
 
-	vector<vector<DMatch>> matches;  //one vector of metches for each example
+	vector<vector<Point2f>> ret;
 
+	//robust features selection using combination of lowe method and homography
+	for (int i = 0; i < obj_imgs.size(); ++i) {
+		
+		vector<vector<DMatch>> matches;
+		matcher.knnMatch(obj_descr[i], frame_descr, matches, 2);
 
-	for(int i = 0; i < obj_imgs.size(); ++i){
-		//for loop to match the frame with the example images
+		//keep only good matches, nearest neighbor
+		vector<DMatch> good_matches;
+		vector<DMatch> very_good_matches;
+		vector<Point2f> good_obj_pts; //good obj points
+		vector<Point2f> good_scene_pts; //frame points
 
-		vector<DMatch> v;
-		matcher->BFMatcher::match(obj_descr[i], descr, v);
-		matches.push_back(v);
-	}
-
-  //thresholding to pick only good matches, for every example compute the minimum match distance.
-  //Then accept as good match if its distance is below min_distance times threshold
-
-	double ratio_thresh = 2;
-	vector<double> min_dists(matches.size());   //vector of minimum distances of matches
-	fill(min_dists.begin(), min_dists.end(), numeric_limits<double>::infinity());
-	vector<vector<DMatch>> good_matches(matches.size());
-
-	for (int i = 0; i < matches.size(); ++i) {
-		for (int j = 0; j < matches[i].size(); ++j) {
-			//for loop to compute the minimum distances between matches of the frame and the examples
-
-			if (matches[i][j].distance < min_dists[i]) {
-				min_dists[i] = matches[i][j].distance;
+		//lowe ratio test
+		for (int j = 0; j < matches.size() - 1; j++) {
+			if (matches[j][0].distance < lowe_ratio * matches[j][1].distance) {
+				DMatch good_match = matches[j][0];
+				good_matches.push_back(good_match); // add this match to the good matches
+				Point2f p1 = obj_keypts[i][good_match.queryIdx].pt;
+				Point2f p2 = frame_keypoints[good_match.trainIdx].pt;
+				good_obj_pts.push_back(p1); //add the first image point from the current good match 
+				good_scene_pts.push_back(p2); //add the second image point from the current good match
 			}
 		}
-	}
 
-	for (int i = 0; i < matches.size(); ++i) {
-		for (int j = 0; j < matches[i].size(); ++j) {
-			//for loop to take the best matches given the threshold
-			if (matches[i][j].distance < ratio_thresh*min_dists[i]) {
-				good_matches[i].push_back(matches[i][j]);
+		cout << "Initial Matches = " << matches.size();
+		cout << ",   After Lowe ratio test = " << good_matches.size() << endl;
+
+		// select among good matches with RANSAC
+		Mat inliers_mask;
+		Mat H = findHomography(good_obj_pts, good_scene_pts, inliers_mask, RANSAC);
+
+		//keep only good points
+		vector<Point2f> very_good_obj_pts; //obj[i] points
+		vector<Point2f> very_good_scene_pts; //frame points
+		for (int j = 0; j < inliers_mask.rows; j++) {
+			if (inliers_mask.at<char>(j, 0) > 0) { //check with inliers mask if the projected point is correct
+				very_good_matches.push_back(good_matches[j]);
+				very_good_obj_pts.push_back(good_obj_pts[j]);
+				very_good_scene_pts.push_back(good_scene_pts[j]);
 			}
 		}
-		std::cout << "Number of good matches: " << good_matches[i].size() << '\n';
-	}
 
-	vector<vector<Point2f>> obj;
-	vector<vector<Point2f>> scene;
-	vector<Point2f> obj_corners(4);
-	vector<Point2f> scene_corners(4);
+		cout << "After homography test = " << very_good_scene_pts.size() << endl;
 
-	for(int i = 0; i < obj_imgs.size(); ++i){
+		//add rectangle points 
+		vector<Point2f> obj_corners(4);
+		vector<Point2f> scene_corners(4);
 
 		obj_corners[0] = Point2f(0, 0);
-		obj_corners[1] = Point2f( (float)obj_imgs[i].cols, 0 );
-		obj_corners[2] = Point2f( (float)obj_imgs[i].cols, (float)obj_imgs[i].rows );
-		obj_corners[3] = Point2f( 0, (float)obj_imgs[i].rows );
+		obj_corners[1] = Point2f((float)obj_imgs[i].cols, 0);
+		obj_corners[2] = Point2f((float)obj_imgs[i].cols, (float)obj_imgs[i].rows);
+		obj_corners[3] = Point2f(0, (float)obj_imgs[i].rows);
 
-		cout << "corners " << i << " = " << obj_corners[0] << " " << obj_corners[1];
-		cout << " " << obj_corners[2] << " " << obj_corners[3] << endl;
-		vector<Point2f> obj_to_add;
-		vector<Point2f> scene_to_add;
-		for(int j = 0; j < good_matches[i].size(); ++j){
-			//-- Get the keypoints from the good matches
-			obj_to_add.push_back(obj_keypts[i][good_matches[i][j].queryIdx].pt);
-			scene_to_add.push_back(keypoints[good_matches[i][j].trainIdx].pt);
-		}
-		obj.push_back(obj_to_add);
-		//add the projected points
-		scene.push_back(scene_to_add);
+		perspectiveTransform(obj_corners, scene_corners, H);
 
-		//find the projected corners
-		Mat H = findHomography(obj[i], scene[i], RANSAC);
-		perspectiveTransform( obj_corners, scene_corners, H);
-    
 		//add the corners at the end of the vector
-		for (int k = 0; k < 4; k++) {
-			Point2f corner = scene_corners[k];
-			scene[i].push_back(corner);
-		}
-	
+		for (int k = 0; k < 4; k++)
+			very_good_scene_pts.push_back(scene_corners[k]);
+		
+		ret.push_back(very_good_scene_pts);
+
 		if (SLOW_MODE) {
-			cv::Mat out;
-			cv::drawMatches(obj_imgs[i], obj_keypts[i], frame, keypoints, good_matches[i], out);
-			cv::imshow("Matches", out);
-			waitKey(0);
+			Mat out1, out2, out3;
+			namedWindow("Original Matches", WINDOW_NORMAL);
+			cv::drawMatches(obj_imgs[i], obj_keypts[i], frame, frame_keypoints, matches, out1);
+			cv::imshow("Original Matches", out1);
+			namedWindow("After Lowe", WINDOW_NORMAL);
+			cv::drawMatches(obj_imgs[i], obj_keypts[i], frame, frame_keypoints, good_matches, out2);
+			cv::imshow("After Lowe", out2);
+			namedWindow("After Homography", WINDOW_AUTOSIZE);
+			cv::drawMatches(obj_imgs[i], obj_keypts[i], frame, frame_keypoints, very_good_matches, out3);
+			cv::imshow("After Homography", out3);
+			
+			cout << "H = " << endl << " " << H << endl << endl;
+
+			cv::waitKey(0);
 		}
 	}
-
   
-	std::cout << "match() ret size = " <<scene.size() << '\n';
-	cout << "match() ret[0] size = " << scene[0].size() << endl;
-	cout << "match() ret[last] size = " << scene[scene.size()-1].size() << endl;
+	std::cout << "match() ret size = " << ret.size() << '\n';
+	cout << "match() ret[0] size = " << ret[0].size() << endl;
+	cout << "match() ret[last] size = " << ret[ret.size()-1].size() << endl;
 
 	cout << "corners 0:" << endl;
-	cout << scene[0][scene[0].size() - 1] << " " << scene[0][scene[0].size() - 2];
-	cout << scene[0][scene[0].size() - 3] << " " << scene[0][scene[0].size() - 4] << endl;
+	cout << ret[0][ret[0].size() - 1] << " " << ret[0][ret[0].size() - 2];
+	cout << ret[0][ret[0].size() - 3] << " " << ret[0][ret[0].size() - 4] << endl;
 
-	//cv::Mat out;
-	//cv::drawMatches(obj_imgs[0], obj_keypts[0], frame, keypoints, good_matches[0], out);
-	//cv::imshow("Matches", out);
-	//waitKey(0);
 
-	return scene;
+	return ret;
 
 }

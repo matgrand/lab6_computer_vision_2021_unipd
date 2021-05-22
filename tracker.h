@@ -21,19 +21,22 @@ public:
 	void draw_rect();
 
 
-
+private:
 	// //variables
 	
 	//keep the points to_track, for each frame analyzed 
 	//frames < objects < points < point > > >
-	vector<vector<vector<Point2f>>> objs_points;  // features points
-	vector<vector<vector<Point2f>>> rect_points;  // rectangles points
+	vector<vector<Point2f>> last_objs_pts;  // features points
+	vector<vector<Point2f>> last_rects;  // rectangles points
 
-	vector<Mat> recent_frames; //collection of the recent frames
+	Mat last_frame; //last frame
 	vector<Scalar> colors; //colors for the rect 
 
 	int num_objs;
 
-	vector<vector<Mat>> H_vec; //4 obj for each frame, one Mat for each obj
+	vector<Mat> Hs; // one Mat for each obj
 
+	vector<bool> has_changed;
+
+	Mat last_out;
 };
