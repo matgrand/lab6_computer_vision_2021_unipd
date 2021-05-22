@@ -39,4 +39,6 @@ private:
 	vector<bool> has_changed;
 
 	Mat last_out;
+	Mat track_mask;
+	Mat show_frame;
 };

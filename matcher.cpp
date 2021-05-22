@@ -84,6 +84,12 @@ vector<vector<Point2f>> MyMatcher::match(Mat frame){
 		vector<Point2f> obj_corners(4);
 		vector<Point2f> scene_corners(4);
 
+		//find 4 best corners
+		//Mat img_gray;
+		//cvtColor(obj_imgs[i], img_gray, COLOR_BGR2GRAY);
+		//float min_dist = min(img_gray.rows, img_gray.rows) * 0.2;
+		//goodFeaturesToTrack(img_gray, obj_corners, 4, 0.001, min_dist);
+
 		obj_corners[0] = Point2f(0, 0);
 		obj_corners[1] = Point2f((float)obj_imgs[i].cols, 0);
 		obj_corners[2] = Point2f((float)obj_imgs[i].cols, (float)obj_imgs[i].rows);

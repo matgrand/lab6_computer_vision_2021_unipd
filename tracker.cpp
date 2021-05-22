@@ -1,7 +1,7 @@
 #include "tracker.h"
 #include <time.h>       
 
-#define SLOW_MODE false
+#define SLOW_MODE true
 
 const int pyramid_levels = 2;
 
@@ -19,6 +19,11 @@ MyTracker::MyTracker(vector<vector<Point2f>> to_track, Mat initial_frame) {
 	num_objs = to_track.size(); //number of objects to track
 	last_out = initial_frame.clone();
 	last_frame = initial_frame.clone();
+	show_frame = initial_frame.clone();
+
+
+	// Create a mask image for drawing purposes
+	track_mask = Mat::zeros(last_frame.size(), last_frame.type());
 
 	//separate corners from features
 	for (int obj_i = 0; obj_i < num_objs; obj_i++) {
@@ -38,6 +43,10 @@ MyTracker::MyTracker(vector<vector<Point2f>> to_track, Mat initial_frame) {
 		
 		has_changed.push_back(true);
 		Hs.push_back(H);
+
+
+		//track_mask.push_back(Mat::zeros(last_frame.size(), last_frame.type()));
+		//track_frame.push_back(Mat::zeros(last_frame.size(), last_frame.type()));
 
 	}
 
@@ -97,23 +106,36 @@ void MyTracker::track(Mat new_frame) {
 
 		has_changed[obj_i] = (get_average_movement(old_good_points, new_good_pts) > max_movement);
 
-		if (has_changed[obj_i]) {//not identity, position is changed
-			if (SLOW_MODE) {
-				cout << "H " << obj_i << " CHANGED !!!!" << endl;
-				cout << H << endl;
-			}
+		if (has_changed[obj_i]) {// position is changed
+
 			// update homography
 			Hs[obj_i] = H.clone();
 			//update last_objs_pts
 			last_objs_pts[obj_i] = new_good_pts;
+			if (SLOW_MODE) {
+				cout << "H " << obj_i << " CHANGED !!!!" << endl;
+				//cout << H << endl;
+				for (int i = 0; i < new_pts.size(); ++i) {
+					line(track_mask, new_pts[i], old_pts[i], colors[obj_i], 1);
+				}
+			}
 		}
-
-		last_frame = frame.clone();
+	}
+	
+	last_frame = frame.clone();
+	if (SLOW_MODE) {
+		
+		imshow("Mask", track_mask);
+		waitKey(1);
+		for (int j = 0; j < 20; j++)
+			subtract(frame, track_mask, frame);
+		add(frame, track_mask, frame);
+		show_frame = frame;
 	}
 }
 
 void MyTracker::draw_rect() {
-	Mat out = last_frame.clone();
+	Mat out = show_frame.clone();
 	for (int obj_i = 0; obj_i < num_objs; obj_i++) {
 		vector<Point2f> curr_rect, new_rect;
 		curr_rect = last_rects[obj_i];
@@ -133,6 +155,7 @@ void MyTracker::draw_rect() {
 
 		last_out = out.clone();
 	}
+
 	namedWindow("Tracking", WINDOW_NORMAL);
 	imshow("Tracking", last_out);
 	waitKey(1);
