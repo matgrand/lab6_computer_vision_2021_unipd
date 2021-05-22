@@ -7,6 +7,8 @@
 using namespace cv;
 using namespace std;
 
+const double lowe_ratio = 0.8;
+
 class MyMatcher {
 public:
 

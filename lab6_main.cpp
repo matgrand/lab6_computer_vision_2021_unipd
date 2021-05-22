@@ -42,6 +42,8 @@ int main(int argc, char* argv[]) {
 		//draw first rectangle
 		trckr.draw_rect();
 
+		waitKey(0);
+
 		while (1) {
 			cap >> frame; //update frame
 			if (frame.empty()) //exit condition
