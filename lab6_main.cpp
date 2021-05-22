@@ -28,22 +28,20 @@ int main(int argc, char* argv[]) {
 	}
 
 	VideoCapture cap("../Data/video.mov");
-	Mat frame;
-
+	Mat frame0;
 	if (cap.isOpened()) {
 		// get the first frame
-		cap >> frame;
+		cap >> frame0;
 		//match the first frame
-		vector<vector<Point2f>> good_points_vec = mtchr.match(frame);
+		vector<vector<Point2f>> good_points_vec = mtchr.match(frame0);
 
 		//create tracker
-		MyTracker trckr = MyTracker(good_points_vec, frame);
+		MyTracker trckr = MyTracker(good_points_vec, frame0);
 
 		//draw first rectangle
 		trckr.draw_rect();
 
-		waitKey(0);
-
+		Mat frame;
 		while (1) {
 			cap >> frame; //update frame
 			if (frame.empty()) //exit condition
@@ -58,5 +56,5 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	waitKey(0);
+	destroyAllWindows();
 }
