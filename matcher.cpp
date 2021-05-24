@@ -1,13 +1,11 @@
 #include "matcher.h"
 
-#define SLOW_MODE false 
+#define SLOW_MODE false //change this to true to see the effects of matching selection
 
 using namespace cv;
 using namespace std;
 
-MyMatcher::MyMatcher(){
-
-}
+MyMatcher::MyMatcher(){}
 
 void MyMatcher::load_obj(Mat img_of_obj){
 
@@ -20,7 +18,6 @@ void MyMatcher::load_obj(Mat img_of_obj){
 	obj_imgs.push_back(img_of_obj);
 	obj_descr.push_back(descr);
 	obj_keypts.push_back(keypoints);
-
 }
 
 vector<vector<Point2f>> MyMatcher::match(Mat frame){
@@ -129,7 +126,5 @@ vector<vector<Point2f>> MyMatcher::match(Mat frame){
 	cout << ret[0][ret[0].size() - 1] << " " << ret[0][ret[0].size() - 2];
 	cout << ret[0][ret[0].size() - 3] << " " << ret[0][ret[0].size() - 4] << endl;
 
-
 	return ret;
-
 }

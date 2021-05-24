@@ -20,9 +20,7 @@ public:
 	void load_obj(Mat img_of_obj);
 
 	// match: return a vector of vectors of points : positions of the good matches, one vector for each obj
-	// See https://docs.opencv.org/3.4/d7/dff/tutorial_feature_homography.html
 	vector<vector<Point2f>> match(Mat frame);
-
 
 	// //variables
 	vector<Mat> obj_imgs;

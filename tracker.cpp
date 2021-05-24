@@ -1,16 +1,13 @@
 #include "tracker.h"
 #include <time.h>       
 
-#define SLOW_MODE true
+#define SLOW_MODE true //change this to false to only see the video with the rectangles
 
 const int pyramid_levels = 2;
-
 const float max_movement = 0.1;
 
-const float f = 100;
-
+// estimate variation between frames
 float get_average_movement(vector<Point2f> pts1, vector<Point2f> pts2);
-
 
 MyTracker::MyTracker(vector<vector<Point2f>> to_track, Mat initial_frame) {
 	
@@ -43,11 +40,6 @@ MyTracker::MyTracker(vector<vector<Point2f>> to_track, Mat initial_frame) {
 		
 		has_changed.push_back(true);
 		Hs.push_back(H);
-
-
-		//track_mask.push_back(Mat::zeros(last_frame.size(), last_frame.type()));
-		//track_frame.push_back(Mat::zeros(last_frame.size(), last_frame.type()));
-
 	}
 
 	//assign a random color to each obj
@@ -88,8 +80,6 @@ void MyTracker::track(Mat new_frame) {
 		vector<Point2f> new_pts;
 		calcOpticalFlowPyrLK(last_frame_gray, frame_gray, old_pts, new_pts, status, err, Size(15, 15), pyramid_levels, criteria);
 	
-		//cout << "optical flow calculated..." << endl;
-
 		//select only the good points
 		vector<Point2f> new_good_pts, old_good_points;
 		for (int i = 0; i < old_pts.size(); i++) //cycle through the old points
@@ -99,7 +89,6 @@ void MyTracker::track(Mat new_frame) {
 				old_good_points.push_back(old_pts[i]);
 			}
 		}
-		//cout << "good points selected: " << new_good_pts.size() << endl;
 
 		//ESTIMATE TRANSLATION 
 		Mat H = findHomography(old_good_points, new_good_pts, RANSAC);
@@ -112,19 +101,15 @@ void MyTracker::track(Mat new_frame) {
 			Hs[obj_i] = H.clone();
 			//update last_objs_pts
 			last_objs_pts[obj_i] = new_good_pts;
-			if (SLOW_MODE) {
-				cout << "H " << obj_i << " CHANGED !!!!" << endl;
-				//cout << H << endl;
-				for (int i = 0; i < new_pts.size(); ++i) {
+			
+			if (SLOW_MODE) // draw track lines
+				for (int i = 0; i < new_pts.size(); ++i) 
 					line(track_mask, new_pts[i], old_pts[i], colors[obj_i], 1);
-				}
-			}
 		}
 	}
 	
 	last_frame = frame.clone();
 	if (SLOW_MODE) {
-		
 		imshow("Mask", track_mask);
 		waitKey(1);
 		for (int j = 0; j < 20; j++)
@@ -168,7 +153,7 @@ float get_average_movement(vector<Point2f> pts1, vector<Point2f> pts2) {
 	float sumy = 0.0;
 	for (int i = 0; i < pts1.size(); ++i) {
 		float fact = pts1[i].x - pts2[i].x;
-		sumx += fact* fact;
+		sumx += fact * fact;
 		fact = pts1[i].y - pts2[i].y;
 		sumy += fact * fact;
 	}

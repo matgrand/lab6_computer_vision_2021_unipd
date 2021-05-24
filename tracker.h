@@ -9,7 +9,6 @@ public:
 
 	// constructor 
 	//accepts a vector of vectors of points, one vector of points for each obj
-	//see https://docs.opencv.org/3.4/d4/dee/tutorial_optical_flow.html
 	MyTracker(vector<vector<Point2f>> to_track, Mat initial_frame);
 
 	// // methods
